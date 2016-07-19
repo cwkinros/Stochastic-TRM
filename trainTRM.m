@@ -55,7 +55,7 @@ W1_GD = W1_TRG;
 W2_GD = W2_TRG;
 
 totalWeights = k0*k1 + k1*k2;
-subsetSize = 40;
+subsetSize = 100;
 
 % randomly pick 10 weights at a time and find minimum 
 

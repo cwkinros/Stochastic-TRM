@@ -47,9 +47,9 @@ g = getG(gradW1,gradW2);
 
 g = compress(g,indices,subsetSize);
 
-gradStepW1 = -stepSize*gradW1 - regularization*W1;
-gradStepW2 = -stepSize*gradW2 - regularization*W2;
-
+gradStepW1 = -stepSize*0.1*gradW1 - regularization*W1;
+gradStepW2 = -stepSize*0.1*gradW2 - regularization*W2;
+error = getTotalError(W1,W2,images,labels,m);
 for i = 1:k1
     W((i-1)*k0 + 1:i*k0) = W1(i,:);    
 end
@@ -62,8 +62,7 @@ end
 
 % result is for debugging purposes (result should equal -g)
 
-p0 = pcg(@(v)v2Gv(v,g0,g1,g2,h1,W1,W2,indices),-g);
-result = v2Gv(p0,g0,g1,g2,h1,W1,W2,indices);
+
 
 
 
@@ -77,7 +76,26 @@ if (norm(g) < 10^-4)
     row_k_f = 0;
     return;
 end
-[Vs,lambdas] = eigs(@(v)A2Av(v,g,stepSize,g0,g1,g2,h1,W1,W2,indices),2*subsetSize,1,'SR');
+
+
+% we want to limit # iterations
+try    
+    numIterations = 20;
+    opts.maxit = numIterations;
+    [Vs,lambdas] = eigs(@(v)A2Av(v,g,stepSize,g0,g1,g2,h1,W1,W2,indices),2*subsetSize,1,'SR',opts);
+catch 
+    newW1 = W1 + gradStepW1;
+    newW2 = W2 + gradStepW2;
+    nextStepSize = stepSize;
+    row_k_f = 0;
+    stepped = true;
+    disp('error');
+    disp(error);
+    return;
+end
+
+p0 = pcg(@(v)v2Gv(v,g0,g1,g2,h1,W1,W2,indices),-g);
+result = v2Gv(p0,g0,g1,g2,h1,W1,W2,indices);
 
 disp('finished eigs');
 Vs = real(Vs);
@@ -129,7 +147,7 @@ for i = 1:k2
     W2_p0(i,:) = p0(count + (i-1)*k1 + 1:count + i*k1);
 end
 
-error = getTotalError(W1,W2,images,labels,m);
+
 
 
 newerror = 0;
@@ -210,18 +228,5 @@ end
 if (newerror > error)
     disp('BAD');
 end
-%this means we ALWAYS go to the global minima
-%newW1 = W1_p0;
-%newW2 = W2_p0;
-
-
-% we need a funtion that inputted a vector outputs Av -> where A is the
-% pencil
-
-
-
-% now we have what we need for the v -> Hv function
-
-
 
 
