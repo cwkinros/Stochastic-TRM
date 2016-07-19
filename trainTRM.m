@@ -86,7 +86,7 @@ for i = 1:numberIterations_TRG;
     if stepped
         [~,indices] = randiVector(subsetSize,totalWeights);
     end
-    [W1_TRG,W2_TRG,errors_TRG(i),stepSize,row_k_f(i),stop,stepped] = TRGStep(W1_TRG,W2_TRG,images,labels,stepSize,m,false,smaller,larger,lowerbound,upperbound,maxStepSize,subsetSize,indices);
+    [W1_TRG,W2_TRG,errors_TRG(i),stepSize,row_k_f(i),stop,stepped] = TRGStep(W1_TRG,W2_TRG,images,labels,stepSize,m,false,smaller,larger,lowerbound,upperbound,maxStepSize,subsetSize,indices,regularization);
     if (stop)
         stepped = true;
         stepSize = maxStepSize;

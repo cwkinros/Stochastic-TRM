@@ -1,4 +1,4 @@
-function [newW1,newW2,error,nextStepSize,row_k_f,stop,stepped] = TRGStep(W1,W2,images,labels,stepSize,m,print,smaller,larger,lb,ub,maxStepSize,subsetSize,indices)
+function [newW1,newW2,error,nextStepSize,row_k_f,stop,stepped] = TRGStep(W1,W2,images,labels,stepSize,m,print,smaller,larger,lb,ub,maxStepSize,subsetSize,indices,regularization)
 
 
 
