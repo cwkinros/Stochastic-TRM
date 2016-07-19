@@ -47,8 +47,8 @@ g = getG(gradW1,gradW2);
 
 g = compress(g,indices,subsetSize);
 
-gradStepW1 = -stepSize*0.1*gradW1 - regularization*W1;
-gradStepW2 = -stepSize*0.1*gradW2 - regularization*W2;
+W1_GD = -stepSize*gradW1 - regularization*W1;
+W2_GD = -stepSize*gradW2 - regularization*W2;
 error = getTotalError(W1,W2,images,labels,m);
 for i = 1:k1
     W((i-1)*k0 + 1:i*k0) = W1(i,:);    
@@ -63,7 +63,7 @@ end
 % result is for debugging purposes (result should equal -g)
 
 
-
+disp(error);
 
 
 disp('aboud to do eigs')
@@ -84,18 +84,22 @@ try
     opts.maxit = numIterations;
     [Vs,lambdas] = eigs(@(v)A2Av(v,g,stepSize,g0,g1,g2,h1,W1,W2,indices),2*subsetSize,1,'SR',opts);
 catch 
-    newW1 = W1 + gradStepW1;
-    newW2 = W2 + gradStepW2;
-    nextStepSize = stepSize;
+    errorG = getTotalError(W1 + W1_GD,W2+W2_GD,images,labels,m);
+    if (errorG < error)    
+        newW1 = W1 + W1_GD;
+        newW2 = W2 + W2_GD;
+        nextStepSize = stepSize;
+    else
+        newW1 = W1;
+        newW2 = W2;
+        nextStepSize = smaller*stepSize;
+    end
     row_k_f = 0;
     stepped = true;
     disp('error');
     disp(error);
     return;
 end
-
-p0 = pcg(@(v)v2Gv(v,g0,g1,g2,h1,W1,W2,indices),-g);
-result = v2Gv(p0,g0,g1,g2,h1,W1,W2,indices);
 
 disp('finished eigs');
 Vs = real(Vs);
@@ -127,24 +131,14 @@ end
 % this should be negative
 
 p1 = -sign(g.'*y2)*stepSize*y1/norm(y1);
-compressed_p0 = p0;
 compressed_p1 = p1;
-p0 = decompress(p0,indices);
 p1 = decompress(p1,indices);
-%p1 = p1_attempt2;
-%disp(p1);
-if print    
-    disp('reformating p0 and p1 to W1 and W2 sets');
-end
-
 for i = 1:k1
     W1_p1(i,:) = p1((i-1)*k0 + 1:i*k0);
-    W1_p0(i,:) = p0((i-1)*k0 + 1:i*k0);
 end
 count = k1*k0;
 for i = 1:k2
     W2_p1(i,:) = p1(count + (i-1)*k1 + 1:count + i*k1); 
-    W2_p0(i,:) = p0(count + (i-1)*k1 + 1:count + i*k1);
 end
 
 
@@ -152,81 +146,35 @@ end
 
 newerror = 0;
 p = zeros(size(p1));
-if (norm(p0) >= stepSize)
 
-    disp('previous error:');
 
-    disp('new error:');
-    error1 = getTotalError(W1 + W1_p1,W2 + W2_p1,images,labels,m);
-	error0 = getTotalError(W1 + W1_p0,W2 + W2_p0,images,labels,m);
-
-    disp('previous error followed by error1 and error0');
-    disp(error);
-    disp(error1);
-    disp(error0);
-    
-    
-    if (true)%error >= error1)
-        newW1 = W1 + W1_p1;
-        newW2 = W2 + W2_p1;
-        p = compressed_p1;
-        newerror = error1;
-    end
-    
-    disp('p1');
-    
-else 
-    % must check error vals
-    disp('must GET TOTAL ERROR for both options');
-    error0 = getTotalError(W1 + W1_p0,W2 + W2_p0,images,labels,m);
-    error1 = getTotalError(W1 + W1_p1,W2 + W2_p1,images,labels,m);
-    disp('previous error followed by error1 and error0');
-    disp(error);
-    disp(error1);
-    disp(error0);
-    if (error1 >= error0 || isnan(error1))% && error >= error0)
-        newW1 = W1_p0 + W1;
-        newW2 = W2_p0 + W2;
-        newerror = error0;
-        p = compressed_p0;
-        disp('p0');
-    else if (true)%error >= error1)
-        newW1 = W1_p1 + W1;
-        newW2 = W2_p1 + W2;
-        newerror = error1;
-        p = compressed_p1;
-        disp('p1');
-        end
-    end
-    
-end
 % model_s should aLWAYS be negative I believe
 
-model_s = g.'*p + 0.5*p.'*v2Gv(p,g0,g1,g2,h1,W1,W2,indices);
-row_k_f = (newerror - error)/model_s;
+model_s = 0;%g.'*p1 + 0.5*p1.'*v2Gv(p1,g0,g1,g2,h1,W1,W2,indices);
+row_k_f = 0;%(newerror - error)/model_s;
 
 % this is questionable and maybe should be removed (it is essentially a
 % hack
 
-stepped = false;
-if (row_k_f <= lb)   
-%    nextStepSize = smaller*stepSize;
-    nextStepSize = stepSize;
+error1 = getTotalError(W1 + W1_p1,W2 + W2_p1,images,labels,m);
+errorGD = getTotalError(W1 + W1_GD,W2 + W2_GD,images,labels,m);
+
+if (error < error1 && error < errorGD)
+    nextStepSize = stepSize*smaller;
     newW1 = W1;
-    newW2 = W2;    
-    newerror = error;
-else    
+    newW2 = W2;
+    stepped = false;
+else
     stepped = true;
-    if (row_k_f < ub || stepSize >= maxStepSize)
+    if (errorGD < error1)
         nextStepSize = stepSize;
+        newW1 = W1 + W1_GD;
+        newW2 = W2 + W2_GD;
     else
-        nextStepSize = larger*stepSize;
+        nextStepSize = stepSize;
+        newW1 = W1 + W1_p1;
+        newW2 = W2 + W2_p1;
     end
 end
-
-
-if (newerror > error)
-    disp('BAD');
-end
-
+        
 
