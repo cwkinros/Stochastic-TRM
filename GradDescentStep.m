@@ -1,4 +1,4 @@
-function [nextW1,nextW2,error] = GradDescentStep(W1,W2,images,labels,stepSize,m,regularization)
+function [nextW1,nextW2,totalError] = GradDescentStep(W1,W2,images,labels,stepSize,m,regularization,totalimages,totallabels,totalm)
 
 sumError = 0;
 gradW1 = zeros(size(W1));
@@ -15,6 +15,8 @@ end
 gradW1 = gradW1 / m;
 gradW2 = gradW2 / m;
 error = sumError / m;
+
+totalError = getTotalError(W1,W2,totalimages,totallabels,totalm);
 
 nextW1 = W1 - stepSize*gradW1 - regularization*W1;
 

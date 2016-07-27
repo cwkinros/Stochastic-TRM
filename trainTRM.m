@@ -1,4 +1,4 @@
-function [W1_TRG,W2_TRG] = trainTRM(W1,W2)
+function [W1_GD,W2_GD] = trainTRM(W1,W2)
 
 
 %--------------------------------regular mnist version-------------------
@@ -23,12 +23,12 @@ k1 = 10;
 k2 = 10;
 
 % number of examples 
-m =300;
+m =1000;
 
-W1_TRG = W1;%ones(k1,k0);
-W2_TRG = W2;%ones(k2,k1);
-W1_GD = W1_TRG;
-W2_GD = W2_TRG;
+%W1_TRG = rand(k1,k0);
+%W2_TRG = rand(k2,k1);
+%W1_GD = W1_TRG;
+%W2_GD = W2_TRG;
 
 %--------------------------end of regular mnist-------------------------
 
@@ -55,14 +55,31 @@ W1_GD = W1_TRG;
 W2_GD = W2_TRG;
 
 totalWeights = k0*k1 + k1*k2;
-subsetSize = 100;
+subsetSize = 50;
+trainingSubsetSize = 20;
 
 % randomly pick 10 weights at a time and find minimum 
 
 % network is two FC layers with ReLU in the middle and Softmax at the end
-learningRate = 0.14;
-numberIterations_GD =0;
-numberIterations_TRG = 300;
+%learningRate = 0.04;
+
+% these values got 0.5413 error
+%a = 200;
+%b = 1500;
+% for training subset 20
+
+
+% these values got 0.6075 error
+%a = 30;
+%b = 150;
+% for training subset 20
+
+% these values got 0.5552 test error and 0.5148 training error
+a = 30*3;
+b = 150*3;
+
+numberIterations_GD =10000;
+numberIterations_TRG = 10000;
 regularization = 0.00000001;
 errors_TRG = zeros(numberIterations_TRG,1);
 errors_GD = zeros(numberIterations_GD,1);
@@ -80,29 +97,35 @@ lowerbound = 0.25;
 maxStepSize = 1;
 stop = false;
 stepped = true;
+timesSTRM = zeros(numberIterations_TRG);
+timesGD = zeros(numberIterations_GD);
+GDCount = 0;
 for i = 1:numberIterations_TRG;
 
     tic;
     if stepped
         [~,indices] = randiVector(subsetSize,totalWeights);
     end
-    [W1_TRG,W2_TRG,errors_TRG(i),stepSize,row_k_f(i),stop,stepped] = TRGStep(W1_TRG,W2_TRG,images,labels,stepSize,m,false,smaller,larger,lowerbound,upperbound,maxStepSize,subsetSize,indices,regularization);
-    if (stop)
-        stepped = true;
-        stepSize = maxStepSize;
-        %disp('Reached local minimum');
-        %break;
+    learningRate = a / (i + b);
+    [setImages,setLabels] = randomSet(trainingSubsetSize,m,images,labels);
+    [W1_TRG,W2_TRG,errors_TRG(i),stepSize,row_k_f(i),stop,GDStep] = TRGStep(W1_TRG,W2_TRG,setImages,setLabels,stepSize,trainingSubsetSize,false,smaller,larger,lowerbound,upperbound,maxStepSize,subsetSize,indices,regularization,learningRate,images,labels,m);
+    disp('iteration:');
+    disp(i);
+    if (GDStep)
+        GDCount = GDCount + 1;
     end
-    stepped = true;
     time_sum_TRG = time_sum_TRG + toc;
-
+    timesSTRM(i) = time_sum_TRG;
     ballSizes(i) = stepSize;
 
 end
 
 for i = 1:numberIterations_GD;
     tic;
-    [W1_GD,W2_GD,errors_GD(i)] = GradDescentStep(W1_GD,W2_GD,images,labels,learningRate,m,regularization);
+    [setImages,setLabels] = randomSet(trainingSubsetSize,m,images,labels);
+
+    learningRate = a / (i + b);
+    [W1_GD,W2_GD,errors_GD(i)] = GradDescentStep(W1_GD,W2_GD,setImages,setLabels,learningRate,trainingSubsetSize,regularization,images,labels,m);
     weights(i) = sum(sum(abs(W1_GD))) + sum(sum(abs(W2_GD)));
 
     if (weights(i) == 0)
@@ -113,21 +136,28 @@ for i = 1:numberIterations_GD;
     if (isnan(W1_GD(1,1)))
         break;
     end
+    
+    
     if (mod(i,10) == 0)
         disp('error:');
         disp(errors_GD(i));
         disp('lr');
         disp(learningRate);
+        disp('iteration:');
+        disp(i);
     end
     time_sum_GD = time_sum_GD + toc;
-    if (i > 1 && errors_GD(i-1) < errors_GD(i))
-        learningRate = learningRate*0.8;
-    else
-%        learningRate = learningRate*1.1;
-    end
+    timesGD(i) = time_sum_GD;
+    %learningRate = learningRate*0.96;
+    %if (i > 1 && errors_GD(i-1) < errors_GD(i))
+    %    learningRate = learningRate*0.5;
+    %else
+    %    learningRate = learningRate*1.05;
+    %end
 
 
 end
+
 
 
 
@@ -139,7 +169,11 @@ title('Gradient Descent Progress');
 xlabel('# iterations');
 ylabel('Objective Value');
 
-
+figure
+plot(timesGD,errors_GD);
+title('Gradient Descent Progress');
+xlabel('time');
+ylabel('Objective Value');
 
 disp('label:');
 disp(labels(1));
@@ -149,6 +183,13 @@ plot(1:numberIterations_TRG,errors_TRG);
 title('Trust Region Method Progress');
 xlabel('# iterations');
 ylabel('Objective Value');
+
+figure
+plot(timesSTRM,errors_TRG);
+title('Trust Region Method Progress');
+xlabel('time');
+ylabel('Objective Value');
+
 
 iter_TRG_t = time_sum_TRG / numberIterations_TRG;
 iter_GD_t = time_sum_GD / numberIterations_GD;
@@ -172,7 +213,18 @@ title('row_k_f');
 xlabel('iteration #');
 
 
+%finally we want to check error from non-test set
 
-    
+disp('CHECK TEST ERRORS');
+disp(size(images));
+disp(size(labels));
+errorTRM = getTotalError(W1_TRG,W2_TRG,images(:,m+1:m+1000),labels(m+1:m+1000),1000);
+errorGD = getTotalError(W1_GD,W2_GD,images(:,m+1:m+1000),labels(m+1:m+1000),1000);
+disp('TEST ERROR TRM:');
+disp(errorTRM);
+disp('TEST ERROR GD:');
+disp(errorGD);
 
+disp('Percentage of GD steps taken');
+disp(GDCount / numberIterations_TRG);
 

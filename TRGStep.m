@@ -1,4 +1,4 @@
-function [newW1,newW2,error,nextStepSize,row_k_f,stop,stepped] = TRGStep(W1,W2,images,labels,stepSize,m,print,smaller,larger,lb,ub,maxStepSize,subsetSize,indices,regularization)
+function [newW1,newW2,totalError,nextStepSize,row_k_f,stop,GDStep] = TRGStep(W1,W2,images,labels,stepSize,m,print,smaller,larger,lb,ub,maxStepSize,subsetSize,indices,regularization,learningRate,totalimages,totallabels,totalm)
 
 
 
@@ -47,8 +47,8 @@ g = getG(gradW1,gradW2);
 
 g = compress(g,indices,subsetSize);
 
-W1_GD = -stepSize*gradW1 - regularization*W1;
-W2_GD = -stepSize*gradW2 - regularization*W2;
+W1_GD = -learningRate*gradW1 - regularization*W1;
+W2_GD = -learningRate*gradW2 - regularization*W2;
 error = getTotalError(W1,W2,images,labels,m);
 for i = 1:k1
     W((i-1)*k0 + 1:i*k0) = W1(i,:);    
@@ -60,10 +60,11 @@ for i = 1:k2
 end
 
 
+
 % result is for debugging purposes (result should equal -g)
 
 
-disp(error);
+
 
 
 disp('aboud to do eigs')
@@ -84,20 +85,16 @@ try
     opts.maxit = numIterations;
     [Vs,lambdas] = eigs(@(v)A2Av(v,g,stepSize,g0,g1,g2,h1,W1,W2,indices),2*subsetSize,1,'SR',opts);
 catch 
-    errorG = getTotalError(W1 + W1_GD,W2+W2_GD,images,labels,m);
-    if (errorG < error)    
-        newW1 = W1 + W1_GD;
-        newW2 = W2 + W2_GD;
-        nextStepSize = stepSize;
-    else
-        newW1 = W1;
-        newW2 = W2;
-        nextStepSize = smaller*stepSize;
-    end
+    errorG = getTotalError(W1 + W1_GD,W2+W2_GD,images,labels,m);    
+    newW1 = W1 + W1_GD;
+    newW2 = W2 + W2_GD;
+    nextStepSize = stepSize;
+    totalError = getTotalError(W1,W2,totalimages,totallabels,totalm);
     row_k_f = 0;
     stepped = true;
+    GDStep = true;
     disp('error');
-    disp(error);
+    disp(totalError);
     return;
 end
 
@@ -156,25 +153,21 @@ row_k_f = 0;%(newerror - error)/model_s;
 % this is questionable and maybe should be removed (it is essentially a
 % hack
 
-error1 = getTotalError(W1 + W1_p1,W2 + W2_p1,images,labels,m);
-errorGD = getTotalError(W1 + W1_GD,W2 + W2_GD,images,labels,m);
+error1 = getTotalError(W1 + W1_p1,W2 + W2_p1,totalimages,totallabels,totalm);
+errorGD = getTotalError(W1 + W1_GD,W2 + W2_GD,totalimages,totallabels,totalm);
 
-if (error < error1 && error < errorGD)
-    nextStepSize = stepSize*smaller;
-    newW1 = W1;
-    newW2 = W2;
-    stepped = false;
+
+if (errorGD < error1)
+    nextStepSize = stepSize;
+    newW1 = W1 + W1_GD;
+    newW2 = W2 + W2_GD;
+    GDStep = true;
 else
-    stepped = true;
-    if (errorGD < error1)
-        nextStepSize = stepSize;
-        newW1 = W1 + W1_GD;
-        newW2 = W2 + W2_GD;
-    else
-        nextStepSize = stepSize;
-        newW1 = W1 + W1_p1;
-        newW2 = W2 + W2_p1;
-    end
+    nextStepSize = stepSize;
+    newW1 = W1 + W1_p1;
+    newW2 = W2 + W2_p1;
+    GDStep = false;
 end
         
-
+totalError = getTotalError(W1,W2,totalimages,totallabels,totalm);
+disp(totalError);
