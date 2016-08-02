@@ -55,7 +55,8 @@ W1_GD = W1_TRG;
 W2_GD = W2_TRG;
 
 totalWeights = k0*k1 + k1*k2;
-subsetSize = 50;
+%subsetSize = 50;
+subsetSize = 100;
 trainingSubsetSize = 20;
 
 % randomly pick 10 weights at a time and find minimum 
@@ -78,8 +79,8 @@ trainingSubsetSize = 20;
 a = 30*3;
 b = 150*3;
 
-numberIterations_GD =10000;
-numberIterations_TRG = 10000;
+numberIterations_GD =1000;
+numberIterations_TRG = 1000;
 regularization = 0.00000001;
 errors_TRG = zeros(numberIterations_TRG,1);
 errors_GD = zeros(numberIterations_GD,1);
@@ -97,8 +98,8 @@ lowerbound = 0.25;
 maxStepSize = 1;
 stop = false;
 stepped = true;
-timesSTRM = zeros(numberIterations_TRG);
-timesGD = zeros(numberIterations_GD);
+timesSTRM = zeros(numberIterations_TRG,1);
+timesGD = zeros(numberIterations_GD,1);
 GDCount = 0;
 for i = 1:numberIterations_TRG;
 
