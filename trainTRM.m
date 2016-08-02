@@ -79,8 +79,8 @@ trainingSubsetSize = 20;
 a = 30*3;
 b = 150*3;
 
-numberIterations_GD =1000;
-numberIterations_TRG = 0;
+numberIterations_GD =0;
+numberIterations_TRG = 15000;
 regularization = 0.0001;
 errors_TRG = zeros(numberIterations_TRG,1);
 errors_GD = zeros(numberIterations_GD,1);

@@ -44,12 +44,27 @@ gradW1 = gradW1 / m;
 gradW2 = gradW2 / m;
 
 g = getG(gradW1,gradW2);
+uncompressedg = g;
 
 g = compress(g,indices,subsetSize);
+
+for i = 1:k1
+    W((i-1)*k0 + 1:i*k0) = W1(i,:);    
+end
+count = k0*k1;
+
+for i = 1:k2
+    W(count + (i-1)*k1 + 1:count + i*k1) = W2(i,:);
+end
+
+W_GD = -learningRate*(uncompressedg + regularization*W.');
+
+stepSize = 1.4*norm(W_GD);
 
 W1_GD = -learningRate*(gradW1 + regularization*W1);
 W2_GD = -learningRate*(gradW2 + regularization*W2);
 error = getTotalError(W1,W2,images,labels,m);
+
 for i = 1:k1
     W((i-1)*k0 + 1:i*k0) = W1(i,:);    
 end
@@ -61,10 +76,9 @@ end
 
 
 
+
+
 % result is for debugging purposes (result should equal -g)
-
-
-
 
 
 disp('aboud to do eigs')
@@ -162,7 +176,9 @@ if (errorGD < error1)
     newW1 = W1 + W1_GD;
     newW2 = W2 + W2_GD;
     GDStep = true;
+    disp('GD');
 else
+    disp('TRM');
     nextStepSize = stepSize;
     newW1 = W1 + W1_p1;
     newW2 = W2 + W2_p1;
