@@ -47,8 +47,8 @@ g = getG(gradW1,gradW2);
 
 g = compress(g,indices,subsetSize);
 
-W1_GD = -learningRate*gradW1 - regularization*W1;
-W2_GD = -learningRate*gradW2 - regularization*W2;
+W1_GD = -learningRate*(gradW1 + regularization*W1);
+W2_GD = -learningRate*(gradW2 + regularization*W2);
 error = getTotalError(W1,W2,images,labels,m);
 for i = 1:k1
     W((i-1)*k0 + 1:i*k0) = W1(i,:);    

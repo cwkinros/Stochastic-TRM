@@ -18,7 +18,7 @@ error = sumError / m;
 
 totalError = getTotalError(W1,W2,totalimages,totallabels,totalm);
 
-nextW1 = W1 - stepSize*gradW1 - regularization*W1;
+nextW1 = W1 - stepSize*(gradW1 + regularization*W1);
 
-nextW2 = W2 - stepSize*gradW2 - regularization*W2;
+nextW2 = W2 - stepSize*(gradW2 + regularization*W2);
 

@@ -80,8 +80,8 @@ a = 30*3;
 b = 150*3;
 
 numberIterations_GD =1000;
-numberIterations_TRG = 1000;
-regularization = 0.00000001;
+numberIterations_TRG = 0;
+regularization = 0.0001;
 errors_TRG = zeros(numberIterations_TRG,1);
 errors_GD = zeros(numberIterations_GD,1);
 weights = zeros(numberIterations_GD,1);
