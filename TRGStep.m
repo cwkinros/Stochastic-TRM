@@ -46,6 +46,7 @@ gradW2 = gradW2 / m;
 g = getG(gradW1,gradW2);
 uncompressedg = g;
 
+
 g = compress(g,indices,subsetSize);
 
 for i = 1:k1
@@ -56,14 +57,15 @@ count = k0*k1;
 for i = 1:k2
     W(count + (i-1)*k1 + 1:count + i*k1) = W2(i,:);
 end
+uncompressedtotalg = uncompressedg + regularization*W.';
+totalg = compress(uncompressedtotalg,indices,subsetSize);
+W_GD = -learningRate*totalg;
 
-W_GD = -learningRate*(uncompressedg + regularization*W.');
-
-stepSize = 1.4*norm(W_GD);
+stepSize = norm(W_GD);
 
 W1_GD = -learningRate*(gradW1 + regularization*W1);
 W2_GD = -learningRate*(gradW2 + regularization*W2);
-error = getTotalError(W1,W2,images,labels,m);
+error = getTotalError(W1,W2,images,labels,m,regularization);
 
 for i = 1:k1
     W((i-1)*k0 + 1:i*k0) = W1(i,:);    
@@ -84,11 +86,17 @@ end
 disp('aboud to do eigs')
 
 if (norm(g) < 10^-4)
-    newW1 = W1;
-    newW2 = W2;
-    error = 0;
+ errorG = getTotalError(W1 + W1_GD,W2+W2_GD,images,labels,m,regularization);    
+    newW1 = W1 + W1_GD;
+    newW2 = W2 + W2_GD;
     nextStepSize = stepSize;
+    totalError = getTotalError(W1,W2,totalimages,totallabels,totalm,regularization);
     row_k_f = 0;
+    stepped = true;
+    GDStep = true;
+    disp('error');
+    disp(totalError);
+    
     return;
 end
 
@@ -97,13 +105,14 @@ end
 try    
     numIterations = 20;
     opts.maxit = numIterations;
-    [Vs,lambdas] = eigs(@(v)A2Av(v,g,stepSize,g0,g1,g2,h1,W1,W2,indices),2*subsetSize,1,'SR',opts);
+    [Vs,lambdas] = eigs(@(v)A2Av(v,totalg,stepSize,g0,g1,g2,h1,W1,W2,indices,regularization),2*subsetSize,1,'SR',opts);
 catch 
-    errorG = getTotalError(W1 + W1_GD,W2+W2_GD,images,labels,m);    
+    
+    errorG = getTotalError(W1 + W1_GD,W2+W2_GD,images,labels,m,regularization);    
     newW1 = W1 + W1_GD;
     newW2 = W2 + W2_GD;
     nextStepSize = stepSize;
-    totalError = getTotalError(W1,W2,totalimages,totallabels,totalm);
+    totalError = getTotalError(W1,W2,totalimages,totallabels,totalm,regularization);
     row_k_f = 0;
     stepped = true;
     GDStep = true;
@@ -167,9 +176,10 @@ row_k_f = 0;%(newerror - error)/model_s;
 % this is questionable and maybe should be removed (it is essentially a
 % hack
 
-error1 = getTotalError(W1 + W1_p1,W2 + W2_p1,totalimages,totallabels,totalm);
-errorGD = getTotalError(W1 + W1_GD,W2 + W2_GD,totalimages,totallabels,totalm);
-
+error1 = getTotalError(W1 + W1_p1,W2 + W2_p1,totalimages,totallabels,totalm,regularization);
+errorGD = getTotalError(W1 + W1_GD,W2 + W2_GD,totalimages,totallabels,totalm,regularization);
+error1 = getTotalError(W1 + W1_p1, W2 + W2_p1, images,labels,m,regularization);
+errorGD = getTotalError(W1 + W1_GD,W2 + W2_GD,images,labels,m,regularization);
 
 if (errorGD < error1)
     nextStepSize = stepSize;
@@ -185,5 +195,5 @@ else
     GDStep = false;
 end
         
-totalError = getTotalError(W1,W2,totalimages,totallabels,totalm);
+totalError = getTotalError(W1,W2,totalimages,totallabels,totalm,regularization);
 disp(totalError);

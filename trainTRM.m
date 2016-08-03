@@ -78,9 +78,9 @@ trainingSubsetSize = 20;
 % these values got 0.5552 test error and 0.5148 training error
 a = 30*3;
 b = 150*3;
+numberIterations_TRG = 100;
+numberIterations_GD =19*numberIterations_TRG;
 
-numberIterations_GD =0;
-numberIterations_TRG = 15000;
 regularization = 0.0001;
 errors_TRG = zeros(numberIterations_TRG,1);
 errors_GD = zeros(numberIterations_GD,1);
@@ -104,9 +104,10 @@ GDCount = 0;
 for i = 1:numberIterations_TRG;
 
     tic;
-    if stepped
-        [~,indices] = randiVector(subsetSize,totalWeights);
-    end
+ 
+    [~,indices] = randiVector(subsetSize,totalWeights);
+    subsetSize = totalWeights;
+    indices = ones(totalWeights,1);
     learningRate = a / (i + b);
     [setImages,setLabels] = randomSet(trainingSubsetSize,m,images,labels);
     [W1_TRG,W2_TRG,errors_TRG(i),stepSize,row_k_f(i),stop,GDStep] = TRGStep(W1_TRG,W2_TRG,setImages,setLabels,stepSize,trainingSubsetSize,false,smaller,larger,lowerbound,upperbound,maxStepSize,subsetSize,indices,regularization,learningRate,images,labels,m);
@@ -219,8 +220,8 @@ xlabel('iteration #');
 disp('CHECK TEST ERRORS');
 disp(size(images));
 disp(size(labels));
-errorTRM = getTotalError(W1_TRG,W2_TRG,images(:,m+1:m+1000),labels(m+1:m+1000),1000);
-errorGD = getTotalError(W1_GD,W2_GD,images(:,m+1:m+1000),labels(m+1:m+1000),1000);
+errorTRM = getTotalError(W1_TRG,W2_TRG,images(:,m+1:m+1000),labels(m+1:m+1000),1000,0);
+errorGD = getTotalError(W1_GD,W2_GD,images(:,m+1:m+1000),labels(m+1:m+1000),1000,0);
 disp('TEST ERROR TRM:');
 disp(errorTRM);
 disp('TEST ERROR GD:');

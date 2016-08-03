@@ -1,4 +1,4 @@
-function [Gv] = v2Gv(v,g0,g1,g2,h1,W1,W2,indices)
+function [Gv] = v2Gv(v,g0,g1,g2,h1,W1,W2,indices,regularization)
 [subsetSize,backup] = size(v);
 if (backup > subsetSize)
     subsetSize = backup;
@@ -34,5 +34,7 @@ for i = 1:rows2
 end
 
 Gv = Gv.';
+
+Gv = Gv + regularization*v;
 
 Gv = compress(Gv,indices,subsetSize);   

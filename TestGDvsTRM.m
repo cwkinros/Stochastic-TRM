@@ -2,9 +2,9 @@ function [] = TestGDvsTRM(W1_GD,W2_GD,W1_TRM,W2_TRM,labels,images,m)
 
 
 disp('test GD error');
-error_GD = getTotalError(W1_GD,W2_GD,images,labels,m);
+error_GD = getTotalError(W1_GD,W2_GD,images,labels,m,0);
 disp('test TRM error');
-error_TRM = getTotalError(W1_TRM,W2_TRM,images,labels,m);
+error_TRM = getTotalError(W1_TRM,W2_TRM,images,labels,m,0);
 
 if (error_GD < error_TRM)
     disp('gradient descent did better');

@@ -1,10 +1,12 @@
-function [error] = getTotalError(W1,W2,images,labels,m)
+function [error] = getTotalError(W1,W2,images,labels,m,regularization)
 
-sum = 0;
+sum1 = 0;
 
 for i = 1:m
     errori = getError(W1,W2,images(:,i),labels(i));
-    sum = sum + errori;
+    sum1 = sum1 + errori;
 end
+error = sum1 / m;
 
-error = sum / m;
+error = error + regularization*(sum(sum(W1.*W1)) + sum(sum(W2.*W2)));
+
