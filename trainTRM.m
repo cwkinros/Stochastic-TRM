@@ -53,11 +53,13 @@ W1_TRG = W1;
 W2_TRG = W2;
 W1_GD = W1_TRG;
 W2_GD = W2_TRG;
+W1_M2 = W1;
+W2_M2 = W2;
 
 totalWeights = k0*k1 + k1*k2;
 %subsetSize = 50;
-subsetSize = 100;
-trainingSubsetSize = 20;
+%subsetSize = 100;
+trainingSubsetSize = 900;
 
 % randomly pick 10 weights at a time and find minimum 
 
@@ -76,20 +78,23 @@ trainingSubsetSize = 20;
 % for training subset 20
 
 % these values got 0.5552 test error and 0.5148 training error
-a = 30*3;
-b = 150*3;
-numberIterations_TRG = 100;
-numberIterations_GD =19*numberIterations_TRG;
+a = 90;%80*4;
+b = 450;
+numberIterations_TRG = 0;%300;
+numberIterations_GD =0;%19*numberIterations_TRG;
+numberIterations_M2 = 200;%numberIterations_TRG;
 
-regularization = 0.0001;
+regularization = 0.00001;
 errors_TRG = zeros(numberIterations_TRG,1);
 errors_GD = zeros(numberIterations_GD,1);
+errors_M2 = zeros(numberIterations_M2,1);
 weights = zeros(numberIterations_GD,1);
 ballSizes = zeros(numberIterations_TRG,1);
 row_k_f = zeros(numberIterations_TRG,1);
-stepSize = 1;
+stepSize = 0.01;
 time_sum_TRG = 0;
 time_sum_GD = 0;
+time_sum_M2 = 0;
 
 smaller = 0.5;
 larger = 2;
@@ -98,14 +103,248 @@ lowerbound = 0.25;
 maxStepSize = 1;
 stop = false;
 stepped = true;
+timesM2 = zeros(numberIterations_M2,1);
 timesSTRM = zeros(numberIterations_TRG,1);
 timesGD = zeros(numberIterations_GD,1);
 GDCount = 0;
+previous_rho = 0;
+
+errors_M2_full = zeros(numberIterations_M2,1);
+errors_M2_800 = zeros(numberIterations_M2,1);
+errors_M2_600 = zeros(numberIterations_M2,1);
+errors_M2_400 = zeros(numberIterations_M2,1);
+errors_M2_200 = zeros(numberIterations_M2,1);
+errors_M2_60 = zeros(numberIterations_M2,1);
+
+timesM2_full = zeros(numberIterations_M2,1);
+timesM2_800 = zeros(numberIterations_M2,1);
+timesM2_600 = zeros(numberIterations_M2,1);
+timesM2_400 = zeros(numberIterations_M2,1);
+timesM2_200 = zeros(numberIterations_M2,1);
+timesM2_60 = zeros(numberIterations_M2,1);
+
+trainingSubsetSize = 1000;
+numrhos = 4;
+rows = zeros(numrhos,1);
+index = 1;
+count = 0;
+sum_rho = 0;
+
+for i = 1:numberIterations_M2
+    tic;
+    [setImages,setLabels] = randomSet(trainingSubsetSize,m,images,labels);
+    learningRate = a / (i + b*3);
+    [W1_M2,W2_M2,errors_M2_full(i),nextStepSize,row_k_f,shrunken] = method2Step(W1_M2,W2_M2,setImages,setLabels,stepSize,trainingSubsetSize,smaller,larger,lowerbound,upperbound,maxStepSize,regularization,images,labels,m,learningRate,previous_rho,count,sum_rho);
+    previous_rho = row_k_f;
+    if (shrunken)
+        count = 0;
+        index = 1;
+        rows = zeros(numrhos,1);
+        sum_rho = 0;
+    else
+        if (count < numrhos)
+            count = count + 1;
+        end
+        rows(index) = row_k_f;
+        index = mod(index,numrhos) + 1;
+        sum_rho = sum(rows);
+    end
+
+    
+    stepSize = nextStepSize;
+    time_sum_M2 = time_sum_M2 + toc;
+    timesM2_full(i) = time_sum_M2;
+end
+
+time_sum_M2 = 0;
+W1_M2 = W1;
+W2_M2 = W2;
+previous_rho = 0;
+trainingSubsetSize = 800;
+rows = zeros(numrhos,1);
+index = 1;
+count = 0;
+sum_rho = 0;
+
+for i = 1:numberIterations_M2
+    tic;
+    [setImages,setLabels] = randomSet(trainingSubsetSize,m,images,labels);
+    learningRate = a / (i + b*3);    
+    [W1_M2,W2_M2,errors_M2_800(i),nextStepSize,row_k_f,shrunken] = method2Step(W1_M2,W2_M2,setImages,setLabels,stepSize,trainingSubsetSize,smaller,larger,lowerbound,upperbound,maxStepSize,regularization,images,labels,m,learningRate,previous_rho,count,sum_rho);
+    previous_rho = row_k_f;
+    if (shrunken)
+        count = 0;
+        index = 1;
+        rows = zeros(numrhos,1);
+        sum_rho = 0;
+    else
+        if (count < numrhos)
+            count = count + 1;
+        end
+        rows(index) = row_k_f;
+        index = mod(index,numrhos) + 1;
+        sum_rho = sum(rows);
+    end
+    stepSize = nextStepSize;
+    time_sum_M2 = time_sum_M2 + toc;
+    timesM2_800(i) = time_sum_M2;
+end
+
+time_sum_M2 = 0;
+W1_M2 = W1;
+W2_M2 = W2;
+previous_rho = 0;
+trainingSubsetSize = 600;
+rows = zeros(numrhos,1);
+index = 1;
+count = 0;
+sum_rho = 0;
+
+for i = 1:numberIterations_M2
+    tic;
+    [setImages,setLabels] = randomSet(trainingSubsetSize,m,images,labels);
+    learningRate = a / (i + b*3);
+    [W1_M2,W2_M2,errors_M2_600(i),nextStepSize,row_k_f,shrunken] = method2Step(W1_M2,W2_M2,setImages,setLabels,stepSize,trainingSubsetSize,smaller,larger,lowerbound,upperbound,maxStepSize,regularization,images,labels,m,learningRate,previous_rho,count,sum_rho);
+    previous_rho = row_k_f;
+    if (shrunken)
+        count = 0;
+        index = 1;
+        rows = zeros(numrhos,1);
+        sum_rho = 0;
+    else
+        if (count < numrhos)
+            count = count + 1;
+        end
+        rows(index) = row_k_f;
+        index = mod(index,numrhos) + 1;
+        sum_rho = sum(rows);
+    end
+    stepSize = nextStepSize;
+    time_sum_M2 = time_sum_M2 + toc;
+    timesM2_600(i) = time_sum_M2;
+end
+
+time_sum_M2 = 0;
+W1_M2 = W1;
+W2_M2 = W2;
+previous_rho = 0;
+trainingSubsetSize = 400;
+rows = zeros(numrhos,1);
+index = 1;
+count = 0;
+sum_rho = 0;
+
+for i = 1:numberIterations_M2
+    tic;
+    [setImages,setLabels] = randomSet(trainingSubsetSize,m,images,labels);
+    learningRate = a / (i + b*3);
+    [W1_M2,W2_M2,errors_M2_400(i),nextStepSize,row_k_f,shrunken] = method2Step(W1_M2,W2_M2,setImages,setLabels,stepSize,trainingSubsetSize,smaller,larger,lowerbound,upperbound,maxStepSize,regularization,images,labels,m,learningRate,previous_rho,count,sum_rho);
+    previous_rho = row_k_f;
+    if (shrunken)
+        count = 0;
+        index = 1;
+        rows = zeros(numrhos,1);
+        sum_rho = 0;
+    else
+        if (count < numrhos)
+            count = count + 1;
+        end
+        rows(index) = row_k_f;
+        index = mod(index,numrhos) + 1;
+        sum_rho = sum(rows);
+    end
+    stepSize = nextStepSize;
+    time_sum_M2 = time_sum_M2 + toc;
+    timesM2_400(i) = time_sum_M2;
+end
+
+time_sum_M2 = 0;
+W1_M2 = W1;
+W2_M2 = W2;
+previous_rho = 0;
+trainingSubsetSize = 200;
+rows = zeros(numrhos,1);
+index = 1;
+count = 0;
+sum_rho = 0;
+
+for i = 1:numberIterations_M2
+    tic;
+    [setImages,setLabels] = randomSet(trainingSubsetSize,m,images,labels);
+    learningRate = a / (i + b*3);
+    [W1_M2,W2_M2,errors_M2_200(i),nextStepSize,row_k_f,shrunken] = method2Step(W1_M2,W2_M2,setImages,setLabels,stepSize,trainingSubsetSize,smaller,larger,lowerbound,upperbound,maxStepSize,regularization,images,labels,m,learningRate,previous_rho,count,sum_rho);
+    previous_rho = row_k_f;
+    if (shrunken)
+        count = 0;
+        index = 1;
+        rows = zeros(numrhos,1);
+        sum_rho = 0;
+    else
+        if (count < numrhos)
+            count = count + 1;
+        end
+        rows(index) = row_k_f;
+        index = mod(index,numrhos) + 1;
+        sum_rho = sum(rows);
+    end
+    stepSize = nextStepSize;
+    time_sum_M2 = time_sum_M2 + toc;
+    timesM2_200(i) = time_sum_M2;
+end
+
+time_sum_M2 = 0;
+W1_M2 = W1;
+W2_M2 = W2;
+previous_rho = 0;
+trainingSubsetSize = 60;
+rows = zeros(numrhos,1);
+index = 1;
+count = 0;
+sum_rho = 0;
+
+for i = 1:numberIterations_M2
+    tic;
+    [setImages,setLabels] = randomSet(trainingSubsetSize,m,images,labels);
+    learningRate = a / (i + b*3);
+    [W1_M2,W2_M2,errors_M2_60(i),nextStepSize,row_k_f,shrunken] = method2Step(W1_M2,W2_M2,setImages,setLabels,stepSize,trainingSubsetSize,smaller,larger,lowerbound,upperbound,maxStepSize,regularization,images,labels,m,learningRate,previous_rho,count,sum_rho);
+    previous_rho = row_k_f;
+    if (shrunken)
+        count = 0;
+        index = 1;
+        rows = zeros(numrhos,1);
+        sum_rho = 0;
+    else
+        if (count < numrhos)
+            count = count + 1;
+        end
+        rows(index) = row_k_f;
+        index = mod(index,numrhos) + 1;
+        sum_rho = sum(rows);
+    end
+    stepSize = nextStepSize;
+    time_sum_M2 = time_sum_M2 + toc;
+    timesM2_60(i) = time_sum_M2;
+end
+
+figure
+plot(1:numberIterations_M2,errors_M2_full,1:numberIterations_M2,errors_M2_800,1:numberIterations_M2,errors_M2_600,1:numberIterations_M2,errors_M2_400,1:numberIterations_M2,errors_M2_200,1:numberIterations_M2,errors_M2_60);
+legend('full','800','600','400','200','60');
+xlabel('# iterations');
+ylabel('error');
+
+figure
+plot(timesM2_full,errors_M2_full,timesM2_800,errors_M2_800,timesM2_600,errors_M2_600,timesM2_400,errors_M2_400,timesM2_200,errors_M2_200,timesM2_60,errors_M2_60);
+legend('full','800','600','400','200','60');
+xlabel('time (s)');
+ylabel('error');
+
+return;
+
 for i = 1:numberIterations_TRG;
 
     tic;
  
-    [~,indices] = randiVector(subsetSize,totalWeights);
+    %[~,indices] = randiVector(subsetSize,totalWeights);
     subsetSize = totalWeights;
     indices = ones(totalWeights,1);
     learningRate = a / (i + b);
@@ -122,6 +361,8 @@ for i = 1:numberIterations_TRG;
 
 end
 
+b = 3*b;
+
 for i = 1:numberIterations_GD;
     tic;
     [setImages,setLabels] = randomSet(trainingSubsetSize,m,images,labels);
@@ -136,6 +377,7 @@ for i = 1:numberIterations_GD;
     end
 
     if (isnan(W1_GD(1,1)))
+        disp('breaking here');
         break;
     end
     
@@ -163,34 +405,49 @@ end
 
 
 
+
+
 TestGDvsTRM(W1_GD,W2_GD,W1_TRG,W2_TRG,labels,images,m);
 
 figure
-plot(1:numberIterations_GD,errors_GD);
-title('Gradient Descent Progress');
+plot(1:numberIterations_GD,errors_GD,1:numberIterations_TRG,errors_TRG,1:numberIterations_M2,errors_M2);
+title('SGD plotted with SGD&TRM');
 xlabel('# iterations');
 ylabel('Objective Value');
 
 figure
-plot(timesGD,errors_GD);
-title('Gradient Descent Progress');
-xlabel('time');
+plot(timesGD,errors_GD,timesSTRM,errors_TRG,timesM2,errors_M2);
+title('SGD plotted with SGD&TRM');
+xlabel('time (s)');
 ylabel('Objective Value');
 
-disp('label:');
-disp(labels(1));
 
-figure
-plot(1:numberIterations_TRG,errors_TRG);
-title('Trust Region Method Progress');
-xlabel('# iterations');
-ylabel('Objective Value');
+%figure
+%plot(1:numberIterations_GD,errors_GD);
+%title('Gradient Descent Progress');
+%xlabel('# iterations');
+%ylabel('Objective Value');
 
-figure
-plot(timesSTRM,errors_TRG);
-title('Trust Region Method Progress');
-xlabel('time');
-ylabel('Objective Value');
+%figure
+%plot(timesGD,errors_GD);
+%title('Gradient Descent Progress');
+%xlabel('time');
+%ylabel('Objective Value');
+
+%disp('label:');
+%disp(labels(1));
+
+%figure
+%plot(1:numberIterations_TRG,errors_TRG);
+%title('Trust Region Method Progress');
+%xlabel('# iterations');
+%ylabel('Objective Value');
+
+%figure
+%plot(timesSTRM,errors_TRG);
+%title('Trust Region Method Progress');
+%xlabel('time');
+%ylabel('Objective Value');
 
 
 iter_TRG_t = time_sum_TRG / numberIterations_TRG;
@@ -208,11 +465,11 @@ title('Changing Ball Size');
 xlabel('# iterations');
 ylabel('ball size');
 
-figure
+%figure
 
-plot(1:numberIterations_TRG,row_k_f);
-title('row_k_f');
-xlabel('iteration #');
+%plot(1:numberIterations_TRG,row_k_f);
+%title('row_k_f');
+%xlabel('iteration #');
 
 
 %finally we want to check error from non-test set

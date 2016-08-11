@@ -147,6 +147,7 @@ if (norm(y1) < 10^-4)
     %stop = true;
     %return;
 end
+
 %options for p1;
 % this should be negative
 
@@ -178,8 +179,8 @@ row_k_f = 0;%(newerror - error)/model_s;
 
 error1 = getTotalError(W1 + W1_p1,W2 + W2_p1,totalimages,totallabels,totalm,regularization);
 errorGD = getTotalError(W1 + W1_GD,W2 + W2_GD,totalimages,totallabels,totalm,regularization);
-error1 = getTotalError(W1 + W1_p1, W2 + W2_p1, images,labels,m,regularization);
-errorGD = getTotalError(W1 + W1_GD,W2 + W2_GD,images,labels,m,regularization);
+%error1 = getTotalError(W1 + W1_p1, W2 + W2_p1, images,labels,m,regularization);
+%errorGD = getTotalError(W1 + W1_GD,W2 + W2_GD,images,labels,m,regularization);
 
 if (errorGD < error1)
     nextStepSize = stepSize;
