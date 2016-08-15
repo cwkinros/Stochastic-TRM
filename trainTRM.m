@@ -80,8 +80,8 @@ trainingSubsetSize = 900;
 % these values got 0.5552 test error and 0.5148 training error
 a = 90;%80*4;
 b = 450;
-numberIterations_TRG = 0;%300;
-numberIterations_GD =0;%19*numberIterations_TRG;
+numberIterations_TRG = 500;
+numberIterations_GD =19*numberIterations_TRG;
 numberIterations_M2 = 200;%numberIterations_TRG;
 
 regularization = 0.00001;
@@ -129,6 +129,12 @@ rows = zeros(numrhos,1);
 index = 1;
 count = 0;
 sum_rho = 0;
+stepSizes_full = zeros(numberIterations_M2,1);
+stepSizes_800 = zeros(numberIterations_M2,1);
+stepSizes_600 = zeros(numberIterations_M2,1);
+stepSizes_400 = zeros(numberIterations_M2,1);
+stepSizes_200 = zeros(numberIterations_M2,1);
+stepSizes_60 = zeros(numberIterations_M2,1);
 
 for i = 1:numberIterations_M2
     tic;
@@ -150,7 +156,7 @@ for i = 1:numberIterations_M2
         sum_rho = sum(rows);
     end
 
-    
+    stepSizes_full(i) = stepSize;
     stepSize = nextStepSize;
     time_sum_M2 = time_sum_M2 + toc;
     timesM2_full(i) = time_sum_M2;
@@ -185,6 +191,7 @@ for i = 1:numberIterations_M2
         index = mod(index,numrhos) + 1;
         sum_rho = sum(rows);
     end
+    stepSizes_800(i) = stepSize;
     stepSize = nextStepSize;
     time_sum_M2 = time_sum_M2 + toc;
     timesM2_800(i) = time_sum_M2;
@@ -219,6 +226,7 @@ for i = 1:numberIterations_M2
         index = mod(index,numrhos) + 1;
         sum_rho = sum(rows);
     end
+    stepSizes_600(i) = stepSize;
     stepSize = nextStepSize;
     time_sum_M2 = time_sum_M2 + toc;
     timesM2_600(i) = time_sum_M2;
@@ -253,6 +261,7 @@ for i = 1:numberIterations_M2
         index = mod(index,numrhos) + 1;
         sum_rho = sum(rows);
     end
+    stepSizes_400(i) = stepSize;
     stepSize = nextStepSize;
     time_sum_M2 = time_sum_M2 + toc;
     timesM2_400(i) = time_sum_M2;
@@ -267,6 +276,8 @@ rows = zeros(numrhos,1);
 index = 1;
 count = 0;
 sum_rho = 0;
+
+
 
 for i = 1:numberIterations_M2
     tic;
@@ -287,6 +298,7 @@ for i = 1:numberIterations_M2
         index = mod(index,numrhos) + 1;
         sum_rho = sum(rows);
     end
+    stepSizes_200(i) = stepSize;
     stepSize = nextStepSize;
     time_sum_M2 = time_sum_M2 + toc;
     timesM2_200(i) = time_sum_M2;
@@ -321,6 +333,7 @@ for i = 1:numberIterations_M2
         index = mod(index,numrhos) + 1;
         sum_rho = sum(rows);
     end
+    stepSizes_60(i) = stepSize;
     stepSize = nextStepSize;
     time_sum_M2 = time_sum_M2 + toc;
     timesM2_60(i) = time_sum_M2;
@@ -338,7 +351,14 @@ legend('full','800','600','400','200','60');
 xlabel('time (s)');
 ylabel('error');
 
-return;
+figure
+plot(1:numberIterations_M2,stepSizes_full,1:numberIterations_M2,stepSizes_800,1:numberIterations_M2,stepSizes_600,1:numberIterations_M2,stepSizes_400,1:numberIterations_M2,stepSizes_200,1:numberIterations_M2,stepSizes_60);
+legend('full','800','600','400','200','60');
+xlabel('#iterations');
+ylabel('TR size');
+
+
+return
 
 for i = 1:numberIterations_TRG;
 
