@@ -1,5 +1,6 @@
 function [output] = forwardProp(x,W1,W2)
 
+
 h1 = W1*x;
 g1 = h1;
 

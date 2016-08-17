@@ -8,7 +8,7 @@ for i = 1:m
     label = labels(i);
     
     [errori,gradW1i,gradW2i] = forwBackProp(image,W1,W2,label);
-    gradW1 = gradW1 + gradW1i;
+gradW1 = gradW1 + gradW1i;
     gradW2 = gradW2 + gradW2i;
     sumError = sumError + errori;
 end
