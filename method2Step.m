@@ -112,6 +112,10 @@ catch
         newW1 = W1 + W1_GD;
         newW2 = W2 + W2_GD;
     end
+    if (errorG > error && error0 > error)
+        newW1 = W1;
+        newW2 = W2;
+    end
     nextStepSize = stepSize;
     totalError = getTotalError(W1,W2,images,labels,m,regularization);
     row_k_f = 0;
@@ -226,7 +230,7 @@ multiplierdown = (1 - (1-smaller)*(n/m));
 
 multiplierup = (1 + (larger - 1)*(n/m));
 if (row_k_f <= lb)   
-    nextStepSize = smaller*stepSize;
+    nextStepSize = multiplierdown*stepSize;
     disp('smaller by:');
     disp(multiplierdown);
     shrunken = true;
@@ -237,7 +241,7 @@ else
     if (row_k_f < ub || stepSize > 2)
         nextStepSize = stepSize;
     else
-        nextStepSize = larger*stepSize;
+        nextStepSize = multiplierup*stepSize;
     end
 end
 error = getTotalError(W1,W2,images,labels,m,regularization);
@@ -255,7 +259,7 @@ if (isnan(newerror))
     newW2 = W2;
 end
 
-if (newerror > error)
+if (newerror > error && row_k_f > lb)
     disp('BAD');
 end
 

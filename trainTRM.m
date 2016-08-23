@@ -21,7 +21,7 @@ k1 = 10;
 k2 = 10;
 
 % number of examples 
-m = 10;
+m = 1000;
 
 
 W1_TRG = W1;
@@ -42,7 +42,7 @@ a = 90;
 b = 1000;
 numberIterations_TRG = 1000;%00;%500;
 numberIterations_GD = 19*numberIterations_TRG;
-numberIterations_M3 = 400;%numberIterations_TRG;
+numberIterations_M3 = 800;%numberIterations_TRG;
 
 regularization = 0.0000001;
 errors_TRG = zeros(numberIterations_TRG,1);
@@ -58,8 +58,8 @@ time_sum_M3 = 0;
 
 smaller = 0.5;
 larger = 2;
-upperbound = 0.8;
-lowerbound = 0.2;
+upperbound = 0.9;
+lowerbound = 0.1;
 stop = false;
 stepped = true;
 timesM3 = zeros(numberIterations_M3,1);
