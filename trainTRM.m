@@ -1,4 +1,4 @@
-function [W1_M3,W2_M3] = trainTRM(W1,W2)
+function [W1_SAG,W2_SAG] = trainTRM(W1,W2)
 
 % images: 784 by 60000 matrix of pixels
 images = loadMNISTImages('train-images.idx3-ubyte');
@@ -38,13 +38,13 @@ totalWeights = k0*k1 + k1*k2;
 %subsetSize = 100;
 trainingSubsetSize = 400;
 
-a = 90;
+a = 9;
 b = 1000;
 numberIterations_TRG = 1000;%00;%500;
 numberIterations_GD = 19*numberIterations_TRG;
-numberIterations_M3 = 800;%numberIterations_TRG;
-
-regularization = 0.0000001;
+numberIterations_M3 = 0;%numberIterations_TRG;
+numberIterations_SAG = 100000;
+regularization = 0;%0.0000001;
 errors_TRG = zeros(numberIterations_TRG,1);
 errors_GD = zeros(numberIterations_GD,1);
 errors_M2 = zeros(numberIterations_M3,1);
@@ -71,7 +71,7 @@ previous_rho = 0;
 
 
 errors_M3 = zeros(numberIterations_M3,1);
-
+errors_SAG = zeros(numberIterations_SAG,1);
 
 timesM3 = zeros(numberIterations_M3,1);
 
@@ -122,8 +122,37 @@ for i = 1:numberIterations_M3
     disp('iterate:');
     disp(i);
 end
+
+W1_SAG = W1;
+W2_SAG = W2;
+time_sum_SAG = 0;
+a = 1*100;
+b = 20000*400;
+for i = 1:numberIterations_SAG
+    tic;
+    randIdx = randi(m);
+    if (randIdx == 0)
+        disp('idx is 0');
+        break;
+    end
+    learningRate = 0.01 - 0.00000001*i;
+    [W1_SAG,W2_SAG,errors_SAG(i),Gs,num,indicesSAG,g] = SAGStep(W1_SAG,W2_SAG,regularization,images,labels,m,learningRate,randIdx,Gs,indicesSAG,num);
+
+    if (norm(g) < 0.00001)
+        break;
+    end
+    time_sum_SAG = time_sum_SAG + toc;
+    size_W_SAG(i) = sum(sum(abs(W1_SAG))) + sum(sum(abs(W2_SAG)));
+    disp('n:');
+    disp(num);
+    timesSAG(i) = time_sum_SAG;
+    disp('iterate:');
+    disp(i);
+    
+end
+
 figure
-plot(1:numberIterations_M3,errors_M3);
+plot(1:numberIterations_SAG,errors_SAG);
 title('error');
 
 figure
