@@ -97,6 +97,7 @@ sum_rho = 0;
 g0s = zeros(k0,m);
 g1s = zeros(k1,m);
 g2s = zeros(k2,m);
+p1s = zeros(totalWeights,m);
 Gs = zeros(totalWeights,m);
 num = 0;
 indicesSAG = zeros(m,1);
@@ -110,7 +111,7 @@ for i = 1:numberIterations_M3
         break;
     end
     learningRate = a / (i + b);
-    [W1_M3,W2_M3,errors_M3(i),nextStepSize,row_k_f,shrunken,g0s,g1s,g2s,Gs,num,indicesSAG] = method2Step(W1_M3,W2_M3,stepSize,smaller,larger,lowerbound,upperbound,regularization,images,labels,m,learningRate,randIdx,g0s,g1s,g2s,Gs,indicesSAG,num);
+    [W1_M3,W2_M3,errors_M3(i),nextStepSize,row_k_f,shrunken,g0s,g1s,g2s,Gs,num,indicesSAG,p1s] = method2Step(W1_M3,W2_M3,stepSize,smaller,larger,lowerbound,upperbound,regularization,images,labels,m,learningRate,randIdx,g0s,g1s,g2s,Gs,indicesSAG,num,p1s);
     previous_rho = row_k_f;
     stepSizes(i) = stepSize;
     stepSize = nextStepSize;
@@ -122,6 +123,10 @@ for i = 1:numberIterations_M3
     disp('iterate:');
     disp(i);
 end
+
+
+
+
 figure
 plot(1:numberIterations_M3,errors_M3);
 title('error');

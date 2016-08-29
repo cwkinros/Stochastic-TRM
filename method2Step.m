@@ -1,4 +1,4 @@
-function [newW1,newW2,error,nextStepSize,row_k_f,shrunken,g0s,g1s,g2s,Gs,n,indicesSAG] = method2Step(W1,W2,stepSize,smaller,larger,lb,ub,regularization,images,labels,m,learningRate,idx,g0s,g1s,g2s,Gs,indicesSAG,n)
+function [newW1,newW2,error,nextStepSize,row_k_f,shrunken,g0s,g1s,g2s,Gs,n,indicesSAG,p1s] = method2Step(W1,W2,stepSize,smaller,larger,lb,ub,regularization,images,labels,m,learningRate,idx,g0s,g1s,g2s,Gs,indicesSAG,n,p1s)
 % first we pick which weights we will focus on
 [~,k0] = size(W1);
 [k2,k1] = size(W2);
@@ -33,12 +33,12 @@ subsetSize = num;
 g = getG(gradW1,gradW2);
 
 %need g0s,g1s,g2s,Gs,indicesSAG,n all passed through 
-[g0s,g1s,g2s,Gs,indicesSAG,n] = Add(g0s,g1s,g2s,Gs,indicesSAG,g0,g1,g2,g,idx,n);
+%[g0s,g1s,g2s,Gs,indicesSAG,n] = Add(g0s,g1s,g2s,Gs,indicesSAG,g0,g1,g2,g,idx,n);
 if (n > m)
     disp('we gotta problem');
 end
 
-[g0,g1,g2,g] = getTotals(g0s,g1s,g2s,Gs,indicesSAG);
+%[g0,g1,g2,g] = getTotals(g0s,g1s,g2s,Gs,indicesSAG);
 h1 = g1;
 for i = 1:k1
     gradW1(i,:) = g((i-1)*k0 + 1:i*k0);
@@ -161,6 +161,9 @@ p1 = -sign(g.'*y2)*stepSize*y1/norm(y1);
 compressed_p1 = p1;
 p1 = decompress(p1,indices);
 
+[p1s,Gs,indicesSAG,n] = Addp1(p1s,Gs,indicesSAG,n,idx,p1,totalg);
+[p1,G] = getStochAver(p1s,Gs,indicesSAG);
+
 
 if isnan(p0(1))
     p0 = 0*p0;
@@ -183,12 +186,14 @@ W2_p1 = zeros(k2,k1);
 
 for i = 1:k1
     W1_p1(i,:) = p1((i-1)*k0 + 1:i*k0);
+    W1_GD(i,:) = G((i-1)*k0 + 1:i*k0);
     W1_p0(i,:) = p0((i-1)*k0 + 1:i*k0);
 end
 count = k1*k0;
 for i = 1:k2
     W2_p1(i,:) = p1(count + (i-1)*k1 + 1:count + i*k1); 
     W2_p0(i,:) = p0(count + (i-1)*k1 + 1:count + i*k1);
+    W2_GD(i,:) = G(count + (i-1)*k1 + 1:count + i*k1);
 end
 
 error = getTotalError(W1,W2,images,labels,m,regularization);
@@ -202,7 +207,7 @@ end
 % model_s should aLWAYS be negative I believe
 
 if ((errorGD < error0 || norm(p0) > stepSize)&& errorGD < error1)
-    p = W_GD;
+    p = G;
     newerror = errorGD;
     newW1 = W1_GD + W1;
     newW2 = W2_GD + W2;
@@ -231,6 +236,8 @@ multiplierdown = (1 - (1-smaller)*(n/m));
 multiplierup = (1 + (larger - 1)*(n/m));
 if (row_k_f <= lb)   
     nextStepSize = multiplierdown*stepSize;
+    Gs = Gs*multiplierdown;
+    p1s = p1s*multiplierdown;
     disp('smaller by:');
     disp(multiplierdown);
     shrunken = true;
@@ -242,6 +249,8 @@ else
         nextStepSize = stepSize;
     else
         nextStepSize = multiplierup*stepSize;
+        Gs = Gs*multiplierup;
+        p1s = p1s*multiplierup;
     end
 end
 error = getTotalError(W1,W2,images,labels,m,regularization);
@@ -275,6 +284,35 @@ function [g0s,g1s,g2s,Gs,indices,n] = Add(g0s,g1s,g2s,Gs,indices,g0,g1,g2,G,inde
     g2s(:,index) = g2;
     Gs(:,index) = G;
 end
+
+function [p1s,Gs,indices,n] = Addp1(p1s,Gs,indices,n,index,p1,G)
+    if (indices(index) == 0)
+        indices(index) = 1;
+        n = n + 1;
+    end
+    p1s(:,index) = p1;
+    Gs(:,index) = G;
+end
+
+function [p1,G] = getStochAver(p1s,Gs,indices)
+
+    [p1rows,cols] = size(p1s);
+    [Grows,~] = size(Gs);
+    p1 = zeros(p1rows,1);
+    G = zeros(Grows,1);
+    
+    count = 0;
+    for i = 1:cols
+        if(indices(i)==1)
+            count = count + 1;
+            G = G + Gs(:,i);
+            p1 = p1 + p1s(:,i);
+        end
+    end
+    p1 = p1 / count;
+    G = G / count;
+end
+    
 
 function [g0,g1,g2,G] = getTotals(g0s,g1s,g2s,Gs,indices)
     [g0rows,cols] = size(g0s);
